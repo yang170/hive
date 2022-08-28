@@ -168,8 +168,8 @@ public class ReflectionStructObjectInspector extends
       for (int i = 0; i < reflectionFields.length; i++) {
         if (!shouldIgnoreField(reflectionFields[i].getName())) {
           reflectionFields[i].setAccessible(true);
-          fields.add(new MyField(i, reflectionFields[i], structFieldObjectInspectors
-              .get(used++)));
+          fields.add(new MyField(i, reflectionFields[i], 
+            ObjectInspectorFactory.getReflectionObjectInspector(reflectionFields[i].getGenericType(), options, false)));
         }
       }
       assert (fields.size() == structFieldObjectInspectors.size());
