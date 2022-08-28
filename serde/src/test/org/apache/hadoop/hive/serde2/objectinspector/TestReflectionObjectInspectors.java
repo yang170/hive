@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -37,6 +38,7 @@ import org.apache.hadoop.hive.serde2.thrift.test.Complex;
 import com.google.common.collect.Lists;
 
 
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -65,7 +67,7 @@ public class TestReflectionObjectInspectors {
       StructObjectInspector soi = (StructObjectInspector) oi1;
       List<? extends StructField> fields = soi.getAllStructFieldRefs();
       assertEquals(6, fields.size());
-      assertEquals(fields.get(2), soi.getStructFieldRef("myString"));
+      assertNotEquals(-1, fields.indexOf(soi.getStructFieldRef("myString")));
 
       // null
       for (int i = 0; i < fields.size(); i++) {
@@ -83,13 +85,57 @@ public class TestReflectionObjectInspectors {
       a.myMapStringString = new HashMap<String, String>();
       a.myMapStringString.put("key", "value");
 
-      assertEquals(1, soi.getStructFieldData(a, fields.get(0)));
-      assertEquals(2, soi.getStructFieldData(a, fields.get(1)));
-      assertEquals("test", soi.getStructFieldData(a, fields.get(2)));
-      assertEquals(a, soi.getStructFieldData(a, fields.get(3)));
-      assertEquals(a.myListString, soi.getStructFieldData(a, fields.get(4)));
+      int myIntIdx = IntStream.range(0, fields.size())
+        .filter(idx -> fields.get(idx)
+        .getFieldName()
+        .equals("myint"))
+        .findFirst()
+        .orElse(-1);
+      int myIntegerIdx = IntStream.range(0, fields.size())
+        .filter(idx -> fields.get(idx)
+        .getFieldName()
+        .equals("myinteger"))
+        .findFirst()
+        .orElse(-1);
+      int myStringIdx = IntStream.range(0, fields.size())
+        .filter(idx -> fields.get(idx)
+        .getFieldName()
+        .equals("mystring"))
+        .findFirst()
+        .orElse(-1);
+      int myStructIdx = IntStream.range(0, fields.size())
+        .filter(idx -> fields.get(idx)
+        .getFieldName()
+        .equals("mystruct"))
+        .findFirst()
+        .orElse(-1);
+      int myListIdx = IntStream.range(0, fields.size())
+        .filter(idx -> fields.get(idx)
+        .getFieldName()
+        .equals("myliststring"))
+        .findFirst()
+        .orElse(-1);
+      int myMapStringStringIdx = IntStream.range(0, fields.size())
+        .filter(idx -> fields.get(idx)
+        .getFieldName()
+        .equals("mymapstringstring"))
+        .findFirst()
+        .orElse(-1);
+      
+      assertNotEquals(-1, myIntIdx);
+      assertNotEquals(-1, myIntegerIdx);
+      assertNotEquals(-1, myStringIdx);
+      assertNotEquals(-1, myStructIdx);
+      assertNotEquals(-1, myListIdx);
+      assertNotEquals(-1, myMapStringStringIdx);
+      
+      assertEquals(1, soi.getStructFieldData(a, fields.get(myIntIdx)));
+      assertEquals(2, soi.getStructFieldData(a, fields.get(myIntegerIdx)));
+      assertEquals("test", soi.getStructFieldData(a, fields.get(myStringIdx)));
+      assertEquals(a, soi.getStructFieldData(a, fields.get(myStructIdx)));
+      assertEquals(a.myListString, soi.getStructFieldData(a, fields.get(myListIdx)));
       assertEquals(a.myMapStringString, soi
-          .getStructFieldData(a, fields.get(5)));
+          .getStructFieldData(a, fields.get(myMapStringStringIdx)));
       ArrayList<Object> afields = new ArrayList<Object>();
       for (int i = 0; i < 6; i++) {
         afields.add(soi.getStructFieldData(a, fields.get(i)));
@@ -98,20 +144,20 @@ public class TestReflectionObjectInspectors {
 
       // sub fields
       assertEquals(PrimitiveObjectInspectorFactory.javaIntObjectInspector,
-          fields.get(0).getFieldObjectInspector());
+          fields.get(myIntIdx).getFieldObjectInspector());
       assertEquals(PrimitiveObjectInspectorFactory.javaIntObjectInspector,
-          fields.get(1).getFieldObjectInspector());
+          fields.get(myIntegerIdx).getFieldObjectInspector());
       assertEquals(PrimitiveObjectInspectorFactory.javaStringObjectInspector,
-          fields.get(2).getFieldObjectInspector());
-      assertEquals(soi, fields.get(3).getFieldObjectInspector());
+          fields.get(myStringIdx).getFieldObjectInspector());
+      assertEquals(soi, fields.get(myStructIdx).getFieldObjectInspector());
       assertEquals(
           ObjectInspectorFactory
               .getStandardListObjectInspector(PrimitiveObjectInspectorFactory.javaStringObjectInspector),
-          fields.get(4).getFieldObjectInspector());
+          fields.get(myListIdx).getFieldObjectInspector());
       assertEquals(ObjectInspectorFactory.getStandardMapObjectInspector(
           PrimitiveObjectInspectorFactory.javaStringObjectInspector,
           PrimitiveObjectInspectorFactory.javaStringObjectInspector), fields
-          .get(5).getFieldObjectInspector());
+          .get(myMapStringStringIdx).getFieldObjectInspector());
     } catch (Throwable e) {
       e.printStackTrace();
       throw e;
